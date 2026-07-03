@@ -7,6 +7,9 @@ const BARE_IMPORT = /import\s+(?:[\s\S]+?\s+from\s+)?["']([^"']+)["'];?/g;
 const CSS_IMPORT = /^\s*import\s+["'][^"']+\.css["'];?\s*$/gm;
 const NAMED_EXPORT = /^(\s*)export\s+(?=(?:const|let|var|function|class|async)\b)/gm;
 const DEFAULT_EXPORT = /export\s+default\s+/;
+// `import React ...` or `import * as React ...` from react — i.e. the artifact
+// already brings its own `React` binding into scope.
+const REACT_DEFAULT_IMPORT = /import\s+(?:React\b|\*\s+as\s+React\b)[^;]*from\s+["']react["']/;
 
 // Collect the bare (non-relative) module specifiers the artifact imports, so the
 // template can map each one to esm.sh via an import map.
@@ -37,5 +40,11 @@ export function transform(source) {
     code = code.replace(DEFAULT_EXPORT, "globalThis.__ARTIE_DEFAULT__ = ");
   }
 
-  return { code, imports, hasDefault: DEFAULT_EXPORT.test(source) };
+  return {
+    code,
+    imports,
+    hasDefault: DEFAULT_EXPORT.test(source),
+    // If the artifact already imports React, the template must NOT add its own.
+    needsReactShim: !REACT_DEFAULT_IMPORT.test(source),
+  };
 }

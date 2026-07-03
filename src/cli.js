@@ -75,10 +75,11 @@ async function main() {
   // Re-read + re-transform on every request so --watch reflects live edits.
   const render = () => {
     const source = readFileSync(sourcePath, "utf8");
-    const { code, imports } = transform(source);
+    const { code, imports, needsReactShim } = transform(source);
     return buildHtml({
       code,
       imports,
+      needsReactShim,
       title: basename(sourcePath),
       watch: opts.watch,
     });

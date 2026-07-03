@@ -38,8 +38,14 @@ const WATCH_SCRIPT = `
 })();
 </script>`;
 
-export function buildHtml({ code, imports, title = "artie", watch = false }) {
+export function buildHtml({ code, imports, needsReactShim = true, title = "artie", watch = false }) {
   const importMap = JSON.stringify({ imports: buildImportMap(imports) }, null, 2);
+
+  // Classic JSX transpiles to `React.createElement`, so `React` must be in
+  // scope where the artifact's JSX lives. Only add the import when the artifact
+  // doesn't already declare `React` itself — a second `import React` in the
+  // same module is a "React has already been declared" SyntaxError.
+  const reactShim = needsReactShim ? "import React from 'react';" : "";
 
   return `<!doctype html>
 <html lang="en">
@@ -57,17 +63,20 @@ ${importMap}
 <body>
 <div id="root"></div>
 <script type="text/babel" data-type="module" data-presets="react,typescript">
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+// Bootstrap imports use private aliases so they never collide with whatever the
+// artifact imports under the same names (React, createRoot, ...).
+import * as __artieReact from 'react';
+import { createRoot as __artieCreateRoot } from 'react-dom/client';
+${reactShim}
 
 ${code}
 
-const Artifact = globalThis.__ARTIE_DEFAULT__;
-const root = createRoot(document.getElementById('root'));
-if (Artifact) {
-  root.render(React.createElement(React.StrictMode, null, React.createElement(Artifact)));
+const __Artifact = globalThis.__ARTIE_DEFAULT__;
+const __root = __artieCreateRoot(document.getElementById('root'));
+if (__Artifact) {
+  __root.render(__artieReact.createElement(__artieReact.StrictMode, null, __artieReact.createElement(__Artifact)));
 } else {
-  root.render(React.createElement('pre', { style: { padding: 16, color: 'crimson' } },
+  __root.render(__artieReact.createElement('pre', { style: { padding: 16, color: 'crimson' } },
     'artie: no default export found in the artifact.'));
 }
 </script>

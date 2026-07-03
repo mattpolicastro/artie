@@ -19,3 +19,13 @@
 **Next:** Manually exercise `--watch` live-edit reload. Consider npm publish later if it proves useful.
 
 ---
+
+## 2026-07-03 (bugfix)
+
+**What:** Fixed blank-window rendering for any artifact that imports the `React` default (e.g. `import React, { useState } from "react"`) — the common claude.ai shape. The template was unconditionally injecting its own `import React from 'react'`, producing a second `React` declaration → `SyntaxError: Identifier 'React' has already been declared` → Babel aborts → blank. Diagnosed live on `ep40-riddim-trainer.jsx`, which now renders and is interactive.
+
+**Decisions:** Template bootstrap now imports React/createRoot under private aliases (`__artieReact`, `__artieCreateRoot`) so it never collides with the artifact's bindings. The `import React` shim (needed for classic-JSX-runtime artifacts that only do named imports, like the counter fixture) is added only when `transform` reports the artifact doesn't already import React (`needsReactShim`). Added `test/fixtures/react-default-import.jsx` as a regression case.
+
+**Next:** Same as above (`--watch` manual test). The regex `transform` still won't handle exotic module shapes, but the two common import styles are now both covered.
+
+---
