@@ -1,0 +1,24 @@
+{
+  "name": "artie",
+  "version": "0.1.0",
+  "description": "Launch a local claude.ai JSX/TSX artifact in a minimal-chrome browser window",
+  "type": "module",
+  "bin": {
+    "artie": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js"
+  },
+  "keywords": [
+    "jsx",
+    "react",
+    "claude",
+    "artifact",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Matt Policastro <matt@mattpolicastro.com>",
+  "license": "MIT"
+}
