@@ -1,0 +1,290 @@
+:root {
+  --bg: #14141a;
+  --sidebar: #191922;
+  --panel: #1d1d26;
+  --edge: #2f2f3d;
+  --text: #e6e6ee;
+  --muted: #9a9aad;
+  --accent: #6c6cff;
+  --error: #ff6b6b;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The [hidden] attribute must win over id/class `display` rules below. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: #00000033;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* --- shell: sidebar + main --- */
+
+#shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  height: 100%;
+}
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar);
+  border-right: 1px solid var(--edge);
+  padding: 14px 10px 10px;
+  min-height: 0;
+}
+
+#library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#library-list li {
+  display: flex;
+  align-items: center;
+  border-radius: 7px;
+}
+
+#library-list li.active {
+  background: #6c6cff22;
+}
+
+#library-list li.active .lib-open {
+  color: var(--text);
+}
+
+.lib-open {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 7px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-open:hover {
+  color: var(--text);
+}
+
+.lib-forget {
+  width: 22px;
+  background: transparent;
+  border: 0;
+  color: transparent;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+#library-list li:hover .lib-forget {
+  color: var(--muted);
+}
+
+.lib-forget:hover {
+  color: var(--error) !important;
+}
+
+/* --- settings --- */
+
+.sidebar-foot {
+  position: relative;
+  border-top: 1px solid var(--edge);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+#settings-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 7px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 7px;
+}
+
+#settings-btn:hover {
+  color: var(--text);
+  background: #ffffff0a;
+}
+
+#settings-menu {
+  position: absolute;
+  bottom: 44px;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 9px;
+  padding: 4px;
+  box-shadow: 0 8px 24px #0008;
+}
+
+#settings-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  padding: 7px 9px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#settings-menu button:hover {
+  background: #ffffff0f;
+}
+
+#about {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 8px 9px 4px;
+  line-height: 1.5;
+}
+
+/* --- main pane --- */
+
+#main {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#dropzone {
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  text-align: center;
+}
+
+.dz-icon {
+  font-size: 40px;
+  line-height: 1;
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+
+#stage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px 7px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--edge);
+}
+
+#stage-title {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stage-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.stage-actions button {
+  width: 28px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.stage-actions button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+#applet {
+  flex: 1;
+  border: 0;
+  width: 100%;
+  background: #fff;
+}
+
+/* --- drag overlay (whole window) --- */
+
+#drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #14141aee;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.do-inner {
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  padding: 48px 72px;
+  text-align: center;
+  color: var(--text);
+}
+
+/* --- toast --- */
+
+#toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--error);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 6px 20px #0008;
+}

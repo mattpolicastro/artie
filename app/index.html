@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>artie</title>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <div id="shell">
+      <aside id="sidebar">
+        <ul id="library-list"></ul>
+        <div class="sidebar-foot">
+          <button id="settings-btn" title="Settings">&#9881; settings</button>
+          <div id="settings-menu" hidden>
+            <button data-act="clear">Clear library</button>
+            <button data-act="reveal">Reveal data folder</button>
+            <button data-act="about">About artie</button>
+            <div id="about" hidden>artie v0.1.0<br />a little applet launcher</div>
+          </div>
+        </div>
+      </aside>
+
+      <main id="main">
+        <!-- empty state: drop hint -->
+        <section id="dropzone" class="pane">
+          <div class="dz-inner">
+            <div class="dz-icon">&#8595;</div>
+            <p>drop a <code>.jsx</code> / <code>.tsx</code> anywhere to run it</p>
+          </div>
+        </section>
+
+        <!-- running applet -->
+        <section id="stage" class="pane" hidden>
+          <div id="stage-bar">
+            <span id="stage-title"></span>
+            <div class="stage-actions">
+              <button id="reload" title="Reload from disk">&#8635;</button>
+              <button id="close" title="Close">&#10005;</button>
+            </div>
+          </div>
+          <iframe id="applet" title="applet"></iframe>
+        </section>
+      </main>
+    </div>
+
+    <div id="drop-overlay" hidden>
+      <div class="do-inner">
+        <div class="dz-icon">&#8595;</div>
+        <p>release to run</p>
+      </div>
+    </div>
+
+    <div id="toast" hidden></div>
+  </body>
+</html>
