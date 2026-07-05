@@ -29,3 +29,17 @@
 **Next:** Same as above (`--watch` manual test). The regex `transform` still won't handle exotic module shapes, but the two common import styles are now both covered.
 
 ---
+
+## 2026-07-05
+
+**What:** Built the first "platform" slice — a Tauri v2 desktop app (`app/`) with the `drop > runs > remembers` loop and a sidebar shell (applet list + settings). Extracted the shared engine to `engine/`, added disk-backed per-applet state, and polyfilled claude.ai's `window.storage`. Verified the full loop (including quit/relaunch persistence) on `ep40-riddim-trainer.jsx`.
+
+**Decisions & gotchas:**
+- **Positioning as a razor:** basic users run applets in Claude, experts roll their own stack — artie is the intermediate tier. Every feature must remove a papercut for that user without becoming expert tooling. Drove the "drop anywhere + sidebar" UI and keeping a native title bar over a custom frame.
+- **WKWebView does not persist localStorage across app restarts under a custom URL scheme** (`artie://`). First attempt (namespaced localStorage) survived reloads but not quits. Fix: artie owns state on disk (`state/<id>.json`); the engine seeds it into the applet on launch and the shim posts mutations up to the host via `postMessage`, which writes to disk. Origin/scheme-independent.
+- **Many artifacts persist via `window.storage`, not `localStorage`** (async KV, `get()→{value}`). ep-40 used it, so it "never persisted" until polyfilled. This is the first runtime-API shim; `window.fs` / `window.claude`→Ollama are the planned next ones.
+- Engine (`transform`/`template`) is pure string work with zero Node deps, so the Tauri frontend imports it directly (Vite `fs.allow: ['..']`); the CLI stays build-free.
+
+**Next:** Custom app icon; packaged build + release bundling via GitHub Actions. Then the platform modules: offline vendored frameworks, `window.claude`→Ollama shim, `window.fs`.
+
+---

@@ -1,47 +1,45 @@
 # artie
 
-**artie** launches a local [claude.ai](https://claude.ai) JSX/TSX artifact in a minimal-chrome browser window. Point it at a `.jsx` file and it opens a frameless, tabless window that just runs the component — no build step, no `node_modules`, no project scaffolding.
+**artie** runs a local [claude.ai](https://claude.ai) JSX/TSX artifact on your machine. Claude generates a single default-exported React component; artie gives it somewhere to actually live and run — no build step, no `node_modules`, no project scaffolding.
+
+> _artie ← **arti**fact._
+
+There are two ways to use it, aimed at two kinds of user:
+
+- **Desktop app** — drop a `.jsx` on a window, it runs, and it's remembered. For when you just want to *use* the applets Claude made you.
+- **CLI** — `artie ./thing.jsx` opens it in a minimal Chrome window. For when you live in a terminal.
+
+Both share the same engine (`engine/`): rewrite the artifact's `export default`, build an HTML shell with an [import map](https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap) → [esm.sh](https://esm.sh), the [Tailwind](https://tailwindcss.com) CDN, and [Babel standalone](https://babeljs.io) that transpiles the JSX in the browser.
+
+## Desktop app
+
+A native ([Tauri](https://tauri.app)) launcher: **drop → runs → remembers**.
+
+- Drop a `.jsx`/`.tsx` anywhere on the window and it runs immediately.
+- A sidebar lists everything you've dropped — click to relaunch, hover to forget.
+- **State persists across restarts.** artie owns each applet's state on disk (`state/<id>.json`) and seeds it back in on launch, so progress/settings survive quitting the app. This includes artifacts that persist via claude.ai's `window.storage` API, which artie polyfills.
+
+Run it (dev):
 
 ```
-artie ./counter.jsx
+cd app
+npm install
+npm run tauri dev
 ```
 
-> _artie ← **arti**fact._ Claude generates a single-file React component; artie gives it a window to live in.
+A packaged build is in progress; until then, run from source as above. Requires the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) (Rust + platform toolchain).
 
-## Why
-
-Claude generates React artifacts as single default-exported components (JSX + Tailwind, sometimes a lib like `lucide-react` or `recharts`). Running one locally normally means hand-rolling an HTML shell or pasting it back into a sandbox. artie collapses that into one command.
-
-## How it works
-
-1. Reads your artifact and rewrites its `export default` so it can render inside an inline module.
-2. Generates an HTML shell: an [import map](https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap) pointing every bare import at [esm.sh](https://esm.sh), the [Tailwind](https://tailwindcss.com) Play CDN, and [Babel standalone](https://babeljs.io) — which transpiles the JSX in the browser.
-3. Serves it from an ephemeral `localhost` server.
-4. Launches your installed Chrome/Chromium in `--app` mode against a scoped temp profile, so you get a clean app window and closing it shuts everything down.
-
-No bundler, no install step for the artifact's dependencies — they stream from the CDN at runtime.
-
-## Install
+## CLI
 
 Requires **Node ≥ 18** and a Chromium-family browser (Chrome, Chromium, Brave, or Edge).
 
 ```
-git clone https://github.com/mattpolicastro/artie.git
-cd artie
-npm link          # exposes the `artie` command on your PATH
-```
-
-## Usage
-
-```
-artie ./my-artifact.jsx                 # open it in a window
+npm link          # from the repo root — exposes the `artie` command
+artie ./my-artifact.jsx                 # open it in a minimal-chrome window
 artie ./my-artifact.jsx --watch         # reload the window on save
 artie ./my-artifact.jsx --browser brave # pick the browser
 artie ./my-artifact.jsx --no-launch     # serve only, print the URL
-artie --help
 ```
-
-Close the window to stop the server (or hit Ctrl-C).
 
 | Option | Description |
 | --- | --- |
@@ -52,9 +50,9 @@ Close the window to stop the server (or hit Ctrl-C).
 
 ## Notes & limitations
 
-- **Needs internet** — React, libraries, and Tailwind load from CDNs at runtime.
+- **Needs internet** — React, libraries, and Tailwind load from CDNs at runtime. (Vendoring them for offline use is a planned module.)
 - **Tailwind** is the guaranteed styling path. Other bare imports (`lucide-react`, `recharts`, `d3`, …) resolve opportunistically through the esm.sh import map and generally just work.
-- **claude.ai-only APIs** (`window.fs`, `window.claude.complete`) aren't available here — artifacts relying on them won't fully run.
+- **`window.storage`** (claude.ai's persistence API) is supported in the desktop app. **`window.fs`** and **`window.claude.complete`** are not yet — artifacts relying on them won't fully run. (Planned shims; `window.claude` is intended to route to a local model.)
 - **shadcn/ui** (`@/components/ui/*`) doesn't resolve via CDN and is out of scope.
 - The source transform is regex-based and tuned for single-component artifacts; unusual module shapes may need a manual tweak.
 
