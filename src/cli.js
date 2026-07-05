@@ -4,8 +4,8 @@
 // minimal-chrome browser window.
 import { readFileSync, existsSync } from "node:fs";
 import { basename, resolve } from "node:path";
-import { transform } from "./transform.js";
-import { buildHtml } from "./template.js";
+import { transform } from "../engine/transform.js";
+import { buildHtml } from "../engine/template.js";
 import { startServer } from "./server.js";
 import { launchApp } from "./browser.js";
 
