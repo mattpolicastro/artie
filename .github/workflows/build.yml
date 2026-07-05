@@ -1,0 +1,57 @@
+name: build
+
+# Builds the macOS app bundle. Pushing a version tag (v*) cuts a draft GitHub
+# release with the .dmg attached; manual runs just upload the bundle as an
+# artifact. Builds are unsigned — signing/notarization needs Apple certs
+# (APPLE_CERTIFICATE / APPLE_SIGNING_IDENTITY / APPLE_ID …) added later.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./app/src-tauri -> target
+
+      - name: Install frontend dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Build app (universal macOS)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          args: --target universal-apple-darwin
+          # On a tag build, publish a draft release; otherwise just build.
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: ${{ github.ref_type == 'tag' && format('artie {0}', github.ref_name) || '' }}
+          releaseDraft: true
+          prerelease: false
+
+      - name: Upload bundle (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: artie-macos
+          path: |
+            app/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app
+          if-no-files-found: error
