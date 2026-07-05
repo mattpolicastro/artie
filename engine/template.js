@@ -21,6 +21,55 @@ function buildImportMap(imports) {
   return map;
 }
 
+// Per-applet runtime shims, injected as head scripts before Babel transpiles.
+//
+// State is owned by artie, not the webview: WKWebView does NOT persist
+// localStorage across app restarts under a custom scheme. So we seed the
+// applet's saved state (from disk, via the host) into an in-memory store, serve
+// synchronous `localStorage` and async `window.storage` reads from it, and post
+// every mutation up to the parent frame — which writes it back to disk. This
+// survives restarts because the source of truth is a file, not webview storage.
+//
+// `seed` is a JSON string ({} when empty); `<` is escaped to avoid a </script>
+// breakout when embedded.
+function runtimeShim(appletId, seed) {
+  const safeSeed = (typeof seed === "string" && seed ? seed : "{}").replace(/</g, "\\u003c");
+  return `
+<script>
+window.__ARTIE_ID__ = ${JSON.stringify(appletId)};
+window.__ARTIE_SEED__ = ${safeSeed};
+(function () {
+  var store = window.__ARTIE_SEED__;
+  if (typeof store !== 'object' || store === null) store = {};
+  var id = window.__ARTIE_ID__;
+  function persist() {
+    try { parent.postMessage({ source: 'artie', id: id, state: store }, '*'); } catch (e) {}
+  }
+  var has = function (k) { return Object.prototype.hasOwnProperty.call(store, k); };
+
+  // Synchronous localStorage, served from the seed, persisted async on change.
+  var ls = {
+    getItem: function (k) { return has(k) ? String(store[k]) : null; },
+    setItem: function (k, v) { store[k] = String(v); persist(); },
+    removeItem: function (k) { delete store[k]; persist(); },
+    clear: function () { Object.keys(store).forEach(function (k) { delete store[k]; }); persist(); },
+    key: function (i) { var ks = Object.keys(store); return i < ks.length ? ks[i] : null; },
+    get length() { return Object.keys(store).length; }
+  };
+  try { Object.defineProperty(window, 'localStorage', { configurable: true, get: function () { return ls; } }); } catch (e) {}
+
+  // claude.ai async window.storage over the same store.
+  if (!window.storage) {
+    window.storage = {
+      get: function (k) { return Promise.resolve(has(k) ? { value: String(store[k]) } : null); },
+      set: function (k, v) { store[k] = String(v); persist(); return Promise.resolve(); },
+      delete: function (k) { delete store[k]; persist(); return Promise.resolve(); }
+    };
+  }
+})();
+</script>`;
+}
+
 // Poll the server for the source mtime; reload when it changes (--watch).
 const WATCH_SCRIPT = `
 <script>
@@ -38,8 +87,9 @@ const WATCH_SCRIPT = `
 })();
 </script>`;
 
-export function buildHtml({ code, imports, needsReactShim = true, title = "artie", watch = false }) {
+export function buildHtml({ code, imports, needsReactShim = true, title = "artie", watch = false, appletId = null, seed = "{}" }) {
   const importMap = JSON.stringify({ imports: buildImportMap(imports) }, null, 2);
+  const state = appletId ? runtimeShim(appletId, seed) : "";
 
   // Classic JSX transpiles to `React.createElement`, so `React` must be in
   // scope where the artifact's JSX lives. Only add the import when the artifact
@@ -53,6 +103,7 @@ export function buildHtml({ code, imports, needsReactShim = true, title = "artie
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${title}</title>
+${state}
 <script type="importmap">
 ${importMap}
 </script>
