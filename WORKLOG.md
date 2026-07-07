@@ -43,3 +43,13 @@
 **Next:** Custom app icon; packaged build + release bundling via GitHub Actions. Then the platform modules: offline vendored frameworks, `window.claude`→Ollama shim, `window.fs`.
 
 ---
+
+## 2026-07-05 (release prep)
+
+**What:** Split the platform work into four clean commits (engine extract → engine state layer → Tauri app → docs), added a GitHub Actions macOS build, designed the app icon, and cut the `v0.1.0` tag to trigger the first release.
+
+**Decisions:** Kept commit 1 a pure file-move by temporarily restoring the pre-feature `template.js`, then re-applying the feature in commit 2. CI builds an **unsigned universal macOS bundle** via `tauri-action` (validated by a manual run: 7m33s, 12 MB artifact); version tags publish a **draft** release with the `.dmg` (signing/notarization deferred — needs Apple certs). Icon is an indigo rounded tile + bold white "a" (rendered with ImageMagick; master + regen recipe in `design/`).
+
+**Next:** Publish the `v0.1.0` draft once the tag build finishes. Note: changing only icon *files* doesn't force a cargo rebuild, so the dev binary keeps the old icon until `build.rs` is touched (Dock also caches). Then the platform modules: offline vendored frameworks, `window.claude`→Ollama, `window.fs`.
+
+---
